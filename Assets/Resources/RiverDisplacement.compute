@@ -1,0 +1,148 @@
+
+#pragma kernel SurfaceDeformation
+#define PI 3.14159265358979323846
+#define DEG2RAD 0.01745329251
+#define RAD2DEG 57.2957795131
+
+struct Vertex
+{
+    float3 position;
+    float3 normal;
+};
+struct Triangle
+{
+    Vertex a, b, c;
+};
+struct WaveParameters
+{
+    float amplitude, frequency, speed, angle, offset;
+};
+struct StreamDirection
+{
+    float2 hotspot;
+    float2 direction;
+    float intensity;
+};
+
+float Amplitude, Frequency, Speed, Time, Alignment;
+
+float4x4 Transform, InvTransform;
+float3 Position;
+uint WaveCount;
+
+uint StreamPointCount;
+uint Seed;
+
+RWStructuredBuffer<Vertex> Vertices;
+RWStructuredBuffer<Vertex> Displacement;
+RWStructuredBuffer<WaveParameters> WaveParametersBuffer;
+RWStructuredBuffer<StreamDirection> StreamDirectionsBuffer;
+
+float2 PlayerPosition;
+
+//float RandomValue(inout uint rngState)
+//{
+//    rngState = rngState * 747796405 + 2891336453;
+//    uint result = ((rngState >> ((rngState >> 28) + 4)) ^ rngState) * 277803737;
+//    result = (result >> 22) ^ result;
+//    return result / 4294967295.0;
+//}
+float2 SampleStreamDirection(float2 at, out float intensity)
+{
+    float2 sum = 0;
+    float q = 0;
+
+    intensity = 0;
+    
+    for(uint k = 0; k < StreamPointCount; k++)
+    {
+        float2 fromTo = at - StreamDirectionsBuffer[k].hotspot;
+        float sqrMag = fromTo.x * fromTo.x + fromTo.y * fromTo.y;
+
+        q += 1 / sqrMag;
+    }
+
+    q = 1 / q;
+
+
+    for(uint i = 0; i < StreamPointCount; i++)
+    {
+        float2 fromTo = at - StreamDirectionsBuffer[i].hotspot;
+        float sqrMag = fromTo.x * fromTo.x + fromTo.y * fromTo.y;
+        //sqrMag *= sqrMag;
+
+        sum += StreamDirectionsBuffer[i].direction / sqrMag;
+        intensity += (q / sqrMag) * StreamDirectionsBuffer[i].intensity;
+    }
+
+    return normalize(sum);
+}
+
+void SampleSine(float amplitude, float frequency, float speed, float angle, float offset, float2 uv, out float height, out float2 derivative)
+{
+    float rad = DEG2RAD * angle;
+    float cosAngle = cos(rad);
+    float sinAngle = sin(rad);
+    
+    float2 direction = float2(cosAngle, sinAngle);
+    
+    uv += direction * offset;
+    
+    float inputD = PI * frequency * (uv.x * direction.x + uv.y * direction.y) - Time * speed;
+
+    derivative = amplitude * frequency * exp(sin(inputD) - 1) * cos(inputD) * direction;
+    uv -= derivative;
+    float input = PI * frequency * (uv.x * direction.x + uv.y * direction.y) - Time * speed;
+    height = amplitude * exp(sin(input) - 1);
+}
+Vertex SampleWaves(Vertex vertex)
+{
+    float height = 0;
+    float2 derivative = 0;
+    
+    float newHeight = 0;
+    float2 newDerivative = 0;
+
+    float amplitudeSum = WaveParametersBuffer[0].amplitude;
+
+    float2 closestPoint;
+    float2 uv = vertex.position.xz;
+    float intensity;
+    float2 streamDirection = SampleStreamDirection(uv, intensity);
+    //float2x2 rotation = float2x2(streamDirection.x, streamDirection.y, -streamDirection.y, streamDirection.x);
+    //uv = mul(rotation, uv);
+
+    //float streamAngle = RAD2DEG * atan2(streamDirection.y, streamDirection.x);
+
+    for(uint i = 0; i < WaveCount; i++)
+    {
+        const WaveParameters params = WaveParametersBuffer[i];
+        amplitudeSum += params.amplitude;
+        
+        SampleSine(params.amplitude * intensity, params.frequency, params.speed * intensity, (1 - Alignment) * params.angle, params.offset, uv, newHeight, newDerivative);
+
+        height += newHeight - params.amplitude / 2;
+        derivative += newDerivative;
+    }
+    
+    const float3 position = vertex.position + vertex.normal * height;
+    const float3 normal = normalize(vertex.normal + float3(derivative.x * vertex.normal.x, vertex.normal.y, derivative.y * vertex.normal.y));
+    //const float3 normal = normalize(float3(derivative.x, 2, derivative.y));
+
+    Vertex output;
+    output.position = position;
+    output.normal = normal;
+    
+    return output;
+}
+
+[numthreads(64,1,1)]
+void SurfaceDeformation (uint3 id : SV_DispatchThreadID)
+{
+    uint vertIndex = id.x;
+    Vertex vert = Vertices[vertIndex];
+    //vert.position = mul(Transform, vert.position);
+    
+    Displacement[vertIndex] = SampleWaves(vert);
+    //Displacement[vertIndex].position = mul(InvTransform, SampleWaves(vert).position);
+}

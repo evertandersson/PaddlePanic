@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 48a234ecc49e35340a3b6c768da64004, type: 3}
+  m_Name: Sound_SplashSound
+  m_EditorClassIdentifier: 
+  clips:
+  - {fileID: 8300000, guid: 5b2d4d90fa25eb94c8c6a59efe61f992, type: 3}
+  - {fileID: 8300000, guid: e35c4571dec653f4ebd79a5e1b047f3d, type: 3}
+  volume:
+    MinValue: 0.40466926
+    MaxValue: 0.5836575
+  pitch:
+    MinValue: 0.94941634
+    MaxValue: 1.1673151

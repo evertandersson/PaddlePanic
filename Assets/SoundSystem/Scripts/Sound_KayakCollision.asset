@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 48a234ecc49e35340a3b6c768da64004, type: 3}
+  m_Name: Sound_KayakCollision
+  m_EditorClassIdentifier: 
+  clips:
+  - {fileID: 8300000, guid: d0b4e55b25c27894a87d625452659dfc, type: 3}
+  - {fileID: 8300000, guid: d2f21025be34f264c8f43cbb4b19e67b, type: 3}
+  - {fileID: 8300000, guid: 53ec267bea493a44a81a8f4caa6fb0e7, type: 3}
+  - {fileID: 8300000, guid: 6127606338fc35e45b8a31f3fc554b0b, type: 3}
+  - {fileID: 8300000, guid: 157184e75481de34e8465b9cda39c7d2, type: 3}
+  volume:
+    MinValue: 0.4732143
+    MaxValue: 0.74999946
+  pitch:
+    MinValue: 0.91071427
+    MaxValue: 1.2678568
